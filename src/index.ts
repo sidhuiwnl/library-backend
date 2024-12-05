@@ -111,13 +111,25 @@ app.get("/getBooks", async (req, res) => {
 app.put("/buyBooks", async (req, res) => {
   await dbConnect();
 
-  const { status, bookId } = req.body;
+  const { status, bookId, issuedDate } = req.body;
 
   try {
+    // Convert issuedDate to the desired format
+    const issuedDateObj = new Date(issuedDate);
+    const formattedIssuedDate = issuedDateObj.toDateString(); // e.g., "Tue Dec 10 2024"
+
+    // Calculate dueDate (15 days later)
+    const dueDateObj = new Date(issuedDateObj);
+    dueDateObj.setDate(issuedDateObj.getDate() + 15);
+    const formattedDueDate = dueDateObj.toDateString();
+
+    // Update the book record
     const updatedBook = await Book.findByIdAndUpdate(
       bookId,
       {
         status: status,
+        issuedDate: issuedDateObj,
+        dueDate: dueDateObj,
       },
       {
         new: true,
@@ -133,24 +145,23 @@ app.put("/buyBooks", async (req, res) => {
       return;
     }
 
-    res.status(200).json([
-      {
-        success: true,
-        data: updatedBook,
+    res.status(200).json({
+      success: true,
+      data: {
+        ...updatedBook._doc,
+        issuedDate: formattedIssuedDate,
+        dueDate: formattedDueDate,
       },
-    ]);
+    });
   } catch (error) {
-    console.error("Error fetching books:", error);
+    console.error("Error updating book:", error);
 
     res.status(500).json({
       success: false,
-      message: "Error fetching books",
+      message: "Error updating book",
     });
   }
 });
-
-
-
 app.listen(3000, () => {
   console.log("Server running on port 3000");
 });

@@ -47,12 +47,12 @@ const BookSchema = new Schema({
 });
 
 
-BookSchema.pre("save", function (next) {
-  if (this.issuedDate && !this.dueDate) {
-    const issuedDate = new Date(this.issuedDate);
-    this.dueDate = new Date(issuedDate.setDate(issuedDate.getDate() + 15));
-  }
-  next();
-});
+// BookSchema.pre("save", function (next) {
+//   if (this.issuedDate && !this.dueDate) {
+//     const issuedDate = new Date(this.issuedDate);
+//     this.dueDate = new Date(issuedDate.setDate(issuedDate.getDate() + 15));
+//   }
+//   next();
+// });
 
 export const Book = mongoose.models.Book || mongoose.model("Book", BookSchema);

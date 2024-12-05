@@ -112,10 +112,20 @@ app.get("/getBooks", (req, res) => __awaiter(void 0, void 0, void 0, function* (
 }));
 app.put("/buyBooks", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, dbConnect_1.dbConnect)();
-    const { status, bookId } = req.body;
+    const { status, bookId, issuedDate } = req.body;
     try {
+        // Convert issuedDate to the desired format
+        const issuedDateObj = new Date(issuedDate);
+        const formattedIssuedDate = issuedDateObj.toDateString(); // e.g., "Tue Dec 10 2024"
+        // Calculate dueDate (15 days later)
+        const dueDateObj = new Date(issuedDateObj);
+        dueDateObj.setDate(issuedDateObj.getDate() + 15);
+        const formattedDueDate = dueDateObj.toDateString();
+        // Update the book record
         const updatedBook = yield book_1.Book.findByIdAndUpdate(bookId, {
             status: status,
+            issuedDate: issuedDateObj,
+            dueDate: dueDateObj,
         }, {
             new: true,
             runValidators: true,
@@ -127,18 +137,16 @@ app.put("/buyBooks", (req, res) => __awaiter(void 0, void 0, void 0, function* (
             });
             return;
         }
-        res.status(200).json([
-            {
-                success: true,
-                data: updatedBook,
-            },
-        ]);
+        res.status(200).json({
+            success: true,
+            data: Object.assign(Object.assign({}, updatedBook._doc), { issuedDate: formattedIssuedDate, dueDate: formattedDueDate }),
+        });
     }
     catch (error) {
-        console.error("Error fetching books:", error);
+        console.error("Error updating book:", error);
         res.status(500).json({
             success: false,
-            message: "Error fetching books",
+            message: "Error updating book",
         });
     }
 }));
